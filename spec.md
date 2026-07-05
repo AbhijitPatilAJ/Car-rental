@@ -1,6 +1,7 @@
 # spec.md — Data Models & Interface Contracts
 
 > **Committed before any implementation files** — defines the contract that all code must conform to.
+> Updated to reflect the fully offline in-memory architecture and dual-currency configuration.
 
 ---
 
@@ -19,9 +20,9 @@ public enum PickupLocationType { Domestic, International }
 ### SearchRequest
 ```csharp
 public class SearchRequest {
-    string Pickup;           // required
-    DateOnly From;           // required
-    DateOnly To;             // required; must be after From
+    string Pickup;             // required
+    DateOnly From;             // required
+    DateOnly To;               // required; must be after From
     VehicleCategory? Category; // optional filter
 }
 ```
@@ -30,10 +31,11 @@ public class SearchRequest {
 ```csharp
 public class VehicleResult {
     string VehicleId;
+    string VehicleName;        // specific model name (e.g., "Hyundai Creta")
     string Provider;           // "PremiumDrive" | "BudgetWheels"
     VehicleCategory Category;
-    decimal DailyRate;         // base per-night rate
-    decimal TotalPrice;        // calculated total for the rental period
+    decimal DailyRate;         // base per-night rate (stored in INR)
+    decimal TotalPrice;        // calculated total for the rental period (stored in INR)
     int RentalDays;
     string InsuranceType;      // "Comprehensive" | "Basic"
     string CancellationPolicy; // "Free cancellation up to 48h before pickup" | "Non-refundable"
@@ -48,18 +50,23 @@ public class BookingRequest {
     string Pickup;          DateOnly From;         DateOnly To;
     decimal TotalPrice;     string InsuranceType;  string CancellationPolicy;
     string DriverName;      DocumentType DocumentType; string DocumentNumber;
+    string Currency;        // "INR" | "USD"
 }
 ```
 
 ### BookingResult
 ```csharp
 public class BookingResult {
-    string ReferenceNumber;   // SKY-{YYYYMMDD}-{4chars}
-    string Provider;          string VehicleId;
-    string Pickup;            DateOnly From;    DateOnly To;
-    decimal TotalPrice;       string InsuranceType; string CancellationPolicy;
-    string DriverName;        string DocumentType;  string DocumentNumber;
-    DateTime ConfirmedAt;     // UTC
+    string ReferenceNumber;      // SKY-{YYYYMMDD}-{4chars}
+    string Provider;             string VehicleId;
+    string Pickup;               DateOnly From;    DateOnly To;
+    decimal TotalPrice;          // stored base price in INR
+    string Currency;             // traveller's selected currency: "INR" | "USD"
+    decimal ExchangeRate;        // conversion rate used (e.g. 84.00 for USD, 0 for INR)
+    decimal TotalPriceConverted; // total price in selected currency
+    string InsuranceType;        string CancellationPolicy;
+    string DriverName;           string DocumentType;  string DocumentNumber;
+    DateTime ConfirmedAt;        // UTC
 }
 ```
 
@@ -145,7 +152,7 @@ for each night from From (inclusive) to To (exclusive):
 | Domestic | ✅ Accepted | ✅ Accepted |
 | International | ✅ Required | ❌ Rejected (422) |
 
-**Domestic cities**: London, Manchester  
+**Domestic cities**: Bangalore, Mumbai, Delhi  
 **International cities**: Paris, Dubai, New York, Tokyo, Sydney
 
 ---
@@ -153,44 +160,15 @@ for each night from From (inclusive) to To (exclusive):
 ## Provider Stubs
 
 ### PremiumDrive (always available)
-| VehicleId | Category | DailyRate |
-|-----------|----------|-----------|
-| PD-ECO-001 | Economy | £45 |
-| PD-COM-001 | Compact | £60 |
-| PD-SUV-001 | SUV | £85 |
-| PD-MIN-001 | Minivan | £100 |
+12 vehicles total (3 per category: entry, mid, premium).
+- *Economy*: Maruti Swift (₹45), Hyundai i20 (₹52), Tata Altroz (₹58)
+- *Compact*: Honda City (₹65), Hyundai Verna (₹72), VW Virtus (₹80)
+- *SUV*: Tata Nexon (₹90), Hyundai Creta (₹105), Mahindra XUV700 (₹125)
+- *Minivan*: Toyota Innova (₹110), Kia Carnival (₹130), Mercedes V-Class (₹155)
 
-### BudgetWheels (4 available, 4 filtered)
-| VehicleId | Category | DailyRate | Available |
-|-----------|----------|-----------|-----------|
-| BW-ECO-001 | Economy | £38 | ✅ |
-| BW-ECO-002 | Economy | £40 | ❌ filtered |
-| BW-COM-001 | Compact | £52 | ✅ |
-| BW-COM-002 | Compact | £55 | ❌ filtered |
-| BW-SUV-001 | SUV | £70 | ✅ |
-| BW-SUV-002 | SUV | £72 | ❌ filtered |
-| BW-MIN-001 | Minivan | £88 | ✅ |
-| BW-MIN-002 | Minivan | £90 | ❌ filtered |
-
----
-
-## Database Schema
-
-```sql
-CREATE TABLE Bookings (
-    Id                 INT AUTO_INCREMENT PRIMARY KEY,
-    ReferenceNumber    VARCHAR(50)   NOT NULL UNIQUE,
-    Provider           VARCHAR(100)  NOT NULL,
-    VehicleId          VARCHAR(100)  NOT NULL,
-    Pickup             VARCHAR(200)  NOT NULL,
-    FromDate           DATE          NOT NULL,
-    ToDate             DATE          NOT NULL,
-    TotalPrice         DECIMAL(10,2) NOT NULL,
-    InsuranceType      VARCHAR(100)  NOT NULL,
-    CancellationPolicy VARCHAR(500)  NOT NULL,
-    DriverName         VARCHAR(300)  NOT NULL,
-    DocumentType       VARCHAR(50)   NOT NULL,
-    DocumentNumber     VARCHAR(200)  NOT NULL,
-    ConfirmedAt        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-```
+### BudgetWheels (12 available, 4 filtered)
+16 vehicles total (3 available + 1 unavailable per category).
+- *Economy*: Maruti WagonR (₹35), Tata Tiago (₹38), Renault Kwid (₹42), Datsun Go (₹40, unavailable)
+- *Compact*: Maruti Dzire (₹50), Honda Amaze (₹55), Hyundai Aura (₹60), Tata Tigor (₹53, unavailable)
+- *SUV*: Maruti Brezza (₹68), Kia Seltos (₹75), Skoda Kushaq (₹82), MG Astor (₹70, unavailable)
+- *Minivan*: Maruti Ertiga (₹88), Toyota Rumion (₹95), Mahindra Marazzo (₹102), Force Traveller (₹90, unavailable)

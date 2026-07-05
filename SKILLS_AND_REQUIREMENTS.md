@@ -1,7 +1,8 @@
 # SkyRoute Car Rental — Skills, Objectives & Requirements
 
-> A single reference document listing the skills demonstrated, objectives to achieve,
+> A reference document listing the skills demonstrated, objectives to achieve,
 > and all functional/non-functional requirements for the Car Rental Availability feature.
+> Updated to reflect the local in-memory stack, Indian cities, and dual-currency features.
 
 ---
 
@@ -11,22 +12,23 @@
 
 | Skill | Where Used |
 |-------|-----------|
-| **Interface-driven design** | `ICarRentalProvider` abstraction — add providers without changing core code |
+| **Interface-driven design** | `ICarRentalProvider` abstraction — add providers without changing aggregator code |
 | **Dependency Injection** | All providers and services registered in DI container |
-| **Async/Await** | Provider calls, database operations |
+| **Async/Await** | Provider calls and booking confirmations |
 | **Strategy Pattern** | Each provider implements its own pricing strategy |
 | **Input validation** | 400/422 HTTP responses with clear messages |
-| **Unit testing** | xUnit tests covering pricing, validation, and booking |
+| **Unit testing** | xUnit tests covering pricing, validation, and search |
 | **Clean code** | Separate models, services, repositories, providers |
 
 ### Domain Knowledge Skills
 
 | Skill | Where Used |
 |-------|-----------|
-| **REST API design** | GET/POST endpoints, correct HTTP status codes |
+| **REST API design** | GET/POST endpoints, correct HTTP status codes, Swagger UI |
 | **Weekend surcharge calculation** | Day-by-day iteration (not multiplication) |
 | **Document validation rules** | Domestic vs. international classification |
 | **Data modelling** | Unified VehicleResult from two different providers |
+| **Currency Handling** | Base storage in INR; on-the-fly USD conversion for international checkouts |
 
 ### Delivery Skills
 
@@ -35,7 +37,7 @@
 | **spec-first development** | spec.md committed before any code |
 | **AI tooling usage** | prompts.md documents all significant prompts |
 | **Honest self-assessment** | reflection.md critiques the implementation |
-| **Newbie-friendly documentation** | PREREQUISITES.md, detailed README |
+| **Newbie-friendly documentation** | README.md and quick start |
 
 ---
 
@@ -49,7 +51,7 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 1. **Design before code**: Commit `spec.md` before any implementation
 2. **Extensibility**: Third provider addition requires zero changes to existing code
 3. **Correctness**: Weekend surcharge must iterate day-by-day; document validation must be dual-layer
-4. **Operability**: Run from a clean clone using only the README
+4. **Operability**: Run from a clean clone using only the README (no database dependencies)
 5. **AI honesty**: Document AI prompts and critically reflect on where AI helped and where it needed correction
 
 ---
@@ -64,6 +66,7 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 - [x] Free cancellation up to 48h before pickup
 - [x] Always available (no filtering needed)
 - [x] Supports: Economy, Compact, SUV, Minivan
+- [x] Expanded Indian car catalogue (Maruti Swift, Honda City, Creta, Innova, etc.)
 
 #### BudgetWheels
 - [x] Base daily rate with weekend surcharge (20% on Fri/Sat/Sun nights)
@@ -72,6 +75,7 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 - [x] Non-refundable cancellation
 - [x] May return `available: false` — these must be filtered out
 - [x] Supports: Economy, Compact, SUV, Minivan
+- [x] Expanded Indian car catalogue (WagonR, Dzire, Brezza, Ertiga, etc.)
 
 ### Functional Requirements — API
 
@@ -92,7 +96,8 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 - [x] Validate document type server-side
 - [x] Return 422 with clear message on document mismatch
 - [x] Confirm booking, return reference number
-- [x] Store booking in MySQL database
+- [x] Store booking in in-memory ConcurrentDictionary store
+- [x] Capture traveler currency preference ("INR" or "USD") and perform conversion at save time
 
 #### GET /cars/booking/{reference}
 - [x] Return booking details by reference number
@@ -102,7 +107,7 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 
 - [x] International pickup → Passport required
 - [x] Domestic pickup → National ID accepted (Passport also valid)
-- [x] At least 2 domestic cities defined: London, Manchester
+- [x] At least 2 domestic cities defined: Bangalore, Mumbai, Delhi
 - [x] At least 3 international cities defined: Paris, Dubai, New York, Tokyo, Sydney
 - [x] Validated client-side (JavaScript) AND server-side (.NET)
 - [x] Return 422 with `code`, `message`, and `field` on mismatch
@@ -111,16 +116,18 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 
 - [x] Search form: pickup location, pickup date, return date, optional category
 - [x] Results: provider badge, category, per-day rate, total price, cancellation policy, insurance indicator
+- [x] Dual Price view (INR primary, USD secondary) for international searches
 - [x] Results sortable by total price
 - [x] Booking form: driver name, document type, document number
 - [x] Booking form: client-side document validation
-- [x] Confirmation: reference number, provider, total price, cancellation policy
+- [x] Booking form: INR/USD payment currency selection (hidden for domestic pickups)
+- [x] Confirmation: reference number, provider, total price (in selected currency), local confirmation time
 - [x] Handle all states: loading, results, empty results, validation error, booking error, confirmation
 
 ### Non-Functional Requirements
 
 - [x] No real rental APIs or credentials
-- [x] Runs fully offline on a local machine
+- [x] Runs fully offline on a local machine (no database server requirement)
 - [x] Third provider can be added without changing core flow
 - [x] Stubs are deterministic (same input → same output)
 - [x] No secrets committed to repository
@@ -132,9 +139,9 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 
 - [x] Backend: .NET 8 Minimal API (C#)
 - [x] Frontend: Plain HTML/JS (no frameworks)
+- [x] Swagger UI: Swashbuckle + Microsoft.AspNetCore.OpenApi
 - [x] Tests: xUnit
-- [x] Database: MySQL (local)
-- [x] Connection string: configurable via `.env` file
+- [x] Database: In-memory thread-safe dictionary
 
 ---
 
@@ -142,8 +149,9 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 
 | City | Type | Required Document |
 |------|------|------------------|
-| London | Domestic | National ID or Passport |
-| Manchester | Domestic | National ID or Passport |
+| Bangalore | 🇮🇳 Domestic | National ID or Passport |
+| Mumbai | 🇮🇳 Domestic | National ID or Passport |
+| Delhi | 🇮🇳 Domestic | National ID or Passport |
 | Paris | International | Passport only |
 | Dubai | International | Passport only |
 | New York | International | Passport only |
@@ -154,14 +162,7 @@ Build a working, offline Car Rental Availability feature for the SkyRoute platfo
 
 ## Vehicle Category Mapping
 
-| Unified Enum | PremiumDrive Label | BudgetWheels Label |
-|-------------|-------------------|--------------------|
-| Economy | Economy | Economy |
-| Compact | Compact | Compact |
-| SUV | SUV | SUV |
-| Minivan | Minivan | Minivan |
-
-Both providers use the same category names. Mapping is case-insensitive.
+Both providers support Economy, Compact, SUV, Minivan mapping to a unified enum.
 
 ---
 
@@ -173,7 +174,7 @@ Both providers use the same category names. Mapping is case-insensitive.
 | Insurance | Comprehensive | Basic only |
 | Cancellation | Free (up to 48h) | Non-refundable |
 | Availability | Always | May be unavailable |
-| Vehicles | 4 (always available) | 8 (4 available, 4 filtered) |
+| Vehicles | 12 (always available) | 16 (12 available, 4 filtered) |
 
 ---
 
@@ -186,22 +187,3 @@ Both providers use the same category names. Mapping is case-insensitive.
 | 400 | Bad Request | Missing/invalid parameters |
 | 404 | Not Found | Booking reference not found |
 | 422 | Unprocessable Entity | Document type mismatch |
-
----
-
-## Submission Checklist
-
-- [ ] Public GitHub repository (no zip files)
-- [ ] README.md — setup and run steps
-- [ ] spec.md — committed before implementation
-- [ ] CarRental.Api/ — .NET 8 backend
-- [ ] CarRental.Tests/ — xUnit tests
-- [ ] skyroute-ui/ — HTML/JS frontend
-- [ ] prompts.md — AI prompts and decisions
-- [ ] reflection.md — improvement analysis
-- [ ] PREREQUISITES.md — A-Z setup guide
-- [ ] EXECUTION_PLAN.md — implementation plan
-- [ ] database/schema.sql — MySQL schema
-- [ ] .env.example — configuration template
-- [ ] .gitignore — excludes .env, bin/, obj/
-- [ ] Application runs end-to-end from clean clone

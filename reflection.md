@@ -6,13 +6,13 @@
 
 **1. Provider Abstraction** — `ICarRentalProvider` achieved its extensibility goal cleanly. Adding a third provider (e.g., `LuxuryFleetProvider`) requires only a new class + one DI line. Zero changes to `CarRentalService`, endpoints, or frontend.
 
-**2. Pricing Correctness** — BudgetWheels surcharge is implemented day-by-day as specified. The temptation to use a shortcut (`countWeekendNights × 1.2 + countWeekdayNights`) was avoided.
+**2. Pricing Correctness** — BudgetWheels surcharge is implemented day-by-day as specified. The UI card and booking sidebar display a clear, dynamic breakdown showing the traveler exactly how the weekend rates apply.
 
-**3. Deterministic Stubs** — same input always gives same output; tests are reproducible and predictable.
+**3. In-Memory Process-Lifetime Storage** — Replaced database persistence with a thread-safe `ConcurrentDictionary` store. This makes the application 100% offline-ready, running cleanly from a fresh clone with only `dotnet run` (zero infrastructure/MySQL setup required).
 
-**4. Single Configuration Point** — `.env` is the only file to change. Verified this works from a clean clone.
+**4. Dual Currency Formatting** — Stored internally in base currency (INR), and converted on-the-fly dynamically. International pickups present dual currencies (INR and USD) and allow travelers to select their payment currency at booking.
 
-**5. Dual-layer Document Validation** — client-side (JavaScript) pre-empts round trips; server-side (.NET) ensures correctness regardless of what the frontend does.
+**5. Deterministic Stubs** — 24 available vehicles mapped to realistic Indian models (Swift, Creta, Brezza, Ertiga, etc.) with tiered category pricing. alternating available/unavailable states test filters accurately.
 
 ---
 
@@ -21,14 +21,14 @@
 ### 1. Authentication
 No auth = any user can guess reference numbers. Would add JWT tokens; bookings tied to authenticated user.
 
-### 2. EF Core with Migrations
-Current: raw ADO.NET. Better: EF Core with `dotnet ef migrations add Initial` — schema always in sync with models, type-safe queries.
+### 2. Live Exchange Rate Integration
+Current: USD conversion uses a hardcoded demo rate of `1 USD = ₹84`. Better: Integrate an external rates API or cache daily rates in the repository memory.
 
-### 3. Integration Tests
-Current tests are unit-only. Would add `WebApplicationFactory<Program>` tests to exercise the full HTTP stack, including validation middleware and response shapes.
+### 3. EF Core with Sqlite/In-Memory Provider
+Current: In-memory `ConcurrentDictionary`. Better: EF Core using an in-memory database provider or Sqlite file. This would let us write SQL/LINQ queries and support migrations without requiring a heavy MySQL server installation.
 
-### 4. Real-time Availability
-BudgetWheels availability is hardcoded. Production version would cross-reference the Bookings table — a vehicle already booked for overlapping dates would be marked unavailable.
+### 4. Integration Tests
+Current tests are unit-only. Would add `WebApplicationFactory<Program>` tests to exercise the full HTTP stack, including validation middleware, Swagger JSON validation, and response shapes.
 
 ### 5. Structured Logging
 Default console logging replaced with Serilog + JSON output. Add request correlation IDs for debugging.
@@ -36,10 +36,7 @@ Default console logging replaced with Serilog + JSON output. Add request correla
 ### 6. Provider Timeout & Circuit Breaker
 If a provider takes >3 seconds, the whole search hangs. Would add per-provider timeout via `CancellationToken` and Polly circuit breaker — return partial results if one provider fails.
 
-### 7. Configuration Startup Validation
-Currently a missing `.env` value fails silently at first DB call. Would add `IOptions<T>` validation that fails fast at startup with a clear message.
-
-### 8. Frontend Build Pipeline
+### 7. Frontend Build Pipeline
 Currently: static files opened via `file://`. For a real team: Vite + TypeScript. Same user experience, but with type safety, hot reload, and bundling.
 
 ---
@@ -47,17 +44,13 @@ Currently: static files opened via `file://`. For a real team: Vite + TypeScript
 ## AI Tooling Reflection
 
 ### What Accelerated Development
-- **Boilerplate**: Models, interface, service skeletons generated quickly
-- **Edge case identification**: AI flagged the Sunday-night edge case for BudgetWheels surcharge unprompted
-- **CORS analysis**: Correctly identified that `WithOrigins("null")` is unreliable for `file://` origins
+- **Boilerplate**: Models, interface, service skeletons generated quickly.
+- **UI Adaptations**: Converting the static card render to display a multi-line surcharge breakdown was fast.
+- **Swagger Documentation**: Injecting parameter metadata into `.WithOpenApi()` was automated smoothly.
 
 ### Where AI Required Correction
-- **Over-engineering**: AI suggested a `PricingStrategyFactory` pattern — rejected; pricing belongs in each provider
-- **Test collision**: AI suggested testing 100 reference number calls as "all unique" — collisions occur with 4-char hex suffixes; reduced to 10 calls
-- **Wrong CORS advice**: First suggestion was `WithOrigins("null")` — corrected after testing
-
-### Critical Reflection
-The spec.md-before-code discipline was the most valuable process decision. Writing the contracts first forced clarity about the data flow before any implementation started. The AI was most useful as a thought partner for designing the interface and for generating test cases with manual calculations in comments (which I then verified).
+- **MySQL Focus**: The AI kept proposing database schemas and connections when a fully local, offline in-memory cache was requested. Corrected to keep persistence fully local to the process.
+- **Port Collisions**: AI attempted parallel runs on port 5000; required process-killing intervention.
 
 ---
 
@@ -66,10 +59,10 @@ The spec.md-before-code discipline was the most valuable process decision. Writi
 | Concern | Current | Production |
 |---------|---------|-----------|
 | Auth | None | JWT/OAuth2 |
-| DB migrations | schema.sql | EF Core migrations |
-| Secrets | .env file | Key Vault |
+| DB Migrations | None (In-memory) | EF Core + Sqlite/PostgreSQL migrations |
+| Exchange Rates | Hardcoded (84.00) | Live Currency API feed |
 | Observability | Console logs | Serilog + Seq |
 | Resilience | None | Polly retry/circuit breaker |
 | Testing | Unit only | Unit + Integration + E2E |
 | Frontend | Static HTML | Vite + TypeScript |
-| Availability | Hardcoded | Real-time DB check |
+| Availability | Hardcoded Catalogue | Real-time Inventory lookup |
