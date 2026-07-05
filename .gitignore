@@ -1,0 +1,25 @@
+# .NET Build Outputs
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# SECRETS — NEVER COMMIT
+.env
+
+# VS Code
+.vscode/
+
+# Test Results
+TestResults/
+*.trx
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NuGet
+packages/
+*.nupkg

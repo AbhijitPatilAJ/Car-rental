@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyRoute Car Rental — Booking Confirmed</title>
+  <meta name="description" content="Your car rental booking is confirmed. View your booking reference and details." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">🚗</div>
+    <h1>SkyRoute Car Rental</h1>
+  </header>
+
+  <main class="container">
+    <div class="confirmation-card" id="confirmation-card">
+
+      <div class="confirmation-icon">✅</div>
+      <h2>Booking Confirmed!</h2>
+      <p class="subtitle">Your vehicle has been reserved. Keep your reference safe.</p>
+
+      <div class="reference-box">
+        <span class="ref-label">Booking Reference</span>
+        <span id="conf-reference">—</span>
+      </div>
+
+      <div class="confirmation-details" id="conf-details">
+        <div class="conf-row">
+          <span class="label">Provider</span>
+          <span class="value" id="conf-provider"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Vehicle</span>
+          <span class="value" id="conf-vehicle"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Pickup Location</span>
+          <span class="value" id="conf-pickup"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Pickup Date</span>
+          <span class="value" id="conf-from"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Return Date</span>
+          <span class="value" id="conf-to"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Driver Name</span>
+          <span class="value" id="conf-driver"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Insurance</span>
+          <span class="value" id="conf-insurance"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Cancellation</span>
+          <span class="value" id="conf-cancel"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Total Paid</span>
+          <span class="value" id="conf-total" style="color:var(--brand-primary);font-size:1.1rem;"></span>
+        </div>
+        <div class="conf-row">
+          <span class="label">Confirmed At</span>
+          <span class="value" id="conf-time"></span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-new-search" style="width:100%;">
+        Search Again →
+      </button>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    const booking = JSON.parse(sessionStorage.getItem('bookingConfirmation') || 'null');
+
+    if (!booking) {
+      document.getElementById('confirmation-card').innerHTML = `
+        <div class="state-container">
+          <div class="state-icon">🔍</div>
+          <div class="state-title">No booking found</div>
+          <div class="state-subtitle">You may have already navigated away from this confirmation.</div>
+          <br/>
+          <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;margin-top:16px;">
+            Return to Search
+          </a>
+        </div>`;
+    } else {
+      document.getElementById('conf-reference').textContent = booking.referenceNumber;
+      document.getElementById('conf-provider').textContent  = booking.provider;
+      document.getElementById('conf-vehicle').textContent   = `${booking.vehicleId}`;
+      document.getElementById('conf-pickup').textContent    = booking.pickup;
+      document.getElementById('conf-from').textContent      = formatDate(booking.from);
+      document.getElementById('conf-to').textContent        = formatDate(booking.to);
+      document.getElementById('conf-driver').textContent    = booking.driverName;
+      document.getElementById('conf-insurance').textContent = booking.insuranceType;
+      document.getElementById('conf-cancel').textContent    = booking.cancellationPolicy;
+      document.getElementById('conf-total').textContent     = formatCurrency(booking.totalPrice);
+      document.getElementById('conf-time').textContent      =
+        new Date(booking.confirmedAt).toLocaleString('en-GB', { timeZone: 'UTC' }) + ' UTC';
+
+      document.getElementById('btn-new-search').addEventListener('click', () => {
+        sessionStorage.removeItem('bookingConfirmation');
+        sessionStorage.removeItem('selectedVehicle');
+        window.location.href = 'index.html';
+      });
+    }
+  </script>
+</body>
+</html>

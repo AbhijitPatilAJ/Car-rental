@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyRoute Car Rental — Search Vehicles</title>
+  <meta name="description" content="Search and compare car rental vehicles across PremiumDrive and BudgetWheels on the SkyRoute platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">🚗</div>
+    <h1>SkyRoute Car Rental</h1>
+    <span class="header-sub">Powered by PremiumDrive &amp; BudgetWheels</span>
+  </header>
+
+  <main class="container">
+
+    <!-- Search Form -->
+    <section class="search-card">
+      <h2>Search Available Vehicles</h2>
+      <form id="search-form" novalidate>
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="pickup">Pickup Location</label>
+            <select id="pickup" name="pickup" required>
+              <option value="" disabled selected>Select a city</option>
+              <optgroup label="🇮🇳 Domestic India (ID or Passport)">
+                <option value="Bangalore">Bangalore</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi">Delhi</option>
+              </optgroup>
+              <optgroup label="✈️ International (Passport required)">
+                <option value="Paris">Paris</option>
+                <option value="Dubai">Dubai</option>
+                <option value="New York">New York</option>
+                <option value="Tokyo">Tokyo</option>
+                <option value="Sydney">Sydney</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="from-date">Pickup Date</label>
+            <input type="date" id="from-date" name="from" required />
+          </div>
+
+          <div class="form-group">
+            <label for="to-date">Return Date</label>
+            <input type="date" id="to-date" name="to" required />
+          </div>
+
+          <div class="form-group">
+            <label for="category">Vehicle Category</label>
+            <select id="category" name="category">
+              <option value="">All Categories</option>
+              <option value="Economy">Economy</option>
+              <option value="Compact">Compact</option>
+              <option value="SUV">SUV</option>
+              <option value="Minivan">Minivan</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn-primary" id="btn-search">Search →</button>
+          </div>
+
+        </div>
+      </form>
+    </section>
+
+    <!-- Results Controls -->
+    <div class="results-controls hidden" id="results-controls">
+      <span class="results-count" id="results-count-text"></span>
+      <button class="btn-secondary hidden" id="btn-sort">↑ Sort by Total Price</button>
+    </div>
+
+    <!-- State Container (loading / empty / error) -->
+    <div id="state-container"></div>
+
+    <!-- Results Grid -->
+    <div id="results-section"></div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/search.js"></script>
+</body>
+</html>

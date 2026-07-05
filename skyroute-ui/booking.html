@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyRoute Car Rental — Complete Your Booking</title>
+  <meta name="description" content="Complete your car rental booking on SkyRoute. Enter your driver details and confirm." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">🚗</div>
+    <h1>SkyRoute Car Rental</h1>
+    <span class="header-sub">Step 2 of 2 — Booking Details</span>
+  </header>
+
+  <main class="container">
+
+    <a href="index.html" class="back-link">← Back to search results</a>
+
+    <div class="booking-layout">
+
+      <!-- Booking Form -->
+      <div class="booking-form-card">
+        <h2>Complete Your Booking</h2>
+        <p class="subtitle">All fields are required. Your document will be validated for the selected pickup location.</p>
+
+        <!-- Error Banner -->
+        <div class="error-banner" id="booking-error" style="display:none;"></div>
+
+        <form id="booking-form" novalidate>
+
+          <!-- Driver Details -->
+          <div class="form-section-title">Driver Information</div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label for="driver-name">Full Name (as on document)</label>
+            <input type="text"
+                   id="driver-name"
+                   name="driverName"
+                   placeholder="e.g. Jane Smith"
+                   autocomplete="name"
+                   required />
+            <span class="field-error" id="driver-name-error"></span>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Document Details -->
+          <div class="form-section-title">Travel Document</div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label for="doc-type">Document Type</label>
+            <select id="doc-type" name="documentType" required>
+              <option value="Passport">Passport</option>
+              <option value="NationalId">National ID</option>
+            </select>
+            <span id="doc-type-help" style="font-size:0.82rem;margin-top:6px;display:block;"></span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="doc-number">Document Number</label>
+            <input type="text"
+                   id="doc-number"
+                   name="documentNumber"
+                   placeholder="e.g. AB1234567"
+                   autocomplete="off"
+                   required />
+            <span class="field-error" id="doc-number-error"></span>
+          </div>
+
+          <!-- Currency Selector — shown for International pickups only -->
+          <div class="form-group" id="currency-group" style="display:none;margin-bottom:24px;">
+            <label>Pay in Currency</label>
+            <div class="currency-toggle" role="group" aria-label="Select currency">
+              <button type="button" class="currency-btn active" id="btn-inr" data-currency="INR">
+                ₹ INR
+              </button>
+              <button type="button" class="currency-btn" id="btn-usd" data-currency="USD">
+                $ USD
+              </button>
+            </div>
+            <input type="hidden" id="selected-currency" value="INR" />
+            <span style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;display:block;">
+              Exchange rate: 1 USD = ₹84 (fixed demo rate)
+            </span>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-confirm" style="width:100%;padding:16px;">
+            Confirm Booking →
+          </button>
+
+        </form>
+      </div>
+
+      <!-- Booking Summary Sidebar -->
+      <aside class="summary-card">
+        <h3>Booking Summary</h3>
+        <div id="sum-badge" class="provider-badge" style="margin-bottom:16px;"></div>
+
+        <div class="summary-row">
+          <span class="label">Model</span>
+          <span class="value" id="sum-name"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Category</span>
+          <span class="value" id="sum-category"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Vehicle ID</span>
+          <span class="value" id="sum-vehicle"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Pickup</span>
+          <span class="value" id="sum-pickup"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">From</span>
+          <span class="value" id="sum-from"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">To</span>
+          <span class="value" id="sum-to"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Duration</span>
+          <span class="value" id="sum-nights"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Per Night</span>
+          <span class="value" id="sum-daily"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Insurance</span>
+          <span class="value" id="sum-insurance"></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Cancellation</span>
+          <span class="value" id="sum-cancel"></span>
+        </div>
+        <div class="summary-row" id="sum-currency-row" style="display:none;">
+          <span class="label">Currency</span>
+          <span class="value" id="sum-currency-display"></span>
+        </div>
+
+        <div class="summary-total">
+          <span class="total-label">Total</span>
+          <span class="total-price" id="sum-total"></span>
+        </div>
+        <div id="sum-inr-ref" style="display:none;font-size:0.75rem;color:var(--text-muted);margin-top:6px;text-align:right;"></div>
+      </aside>
+
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>
