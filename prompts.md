@@ -9,7 +9,7 @@
 ## Prompt 1 — Project Planning & Architecture
 
 **Phase**: Analysis & Design  
-**Tool**: Antigravity IDE (AI coding assistant)
+**Tool**: Claude (AI coding assistant)
 
 **Prompt**:
 ```
@@ -38,7 +38,7 @@ Accepted the architecture. Chose in-memory `ConcurrentDictionary` over any datab
 ## Prompt 2 — BudgetWheels Weekend Surcharge Algorithm
 
 **Phase**: Implementation  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -64,7 +64,7 @@ Accepted. Verified the math manually: 3 weekend nights + 4 weekday nights for a 
 ## Prompt 3 — ICarRentalProvider Interface Design
 
 **Phase**: Design  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -94,7 +94,7 @@ Accepted exactly. The `ct = default` makes CancellationToken optional, simplifyi
 ## Prompt 4 — Document Validation Logic
 
 **Phase**: Design  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -121,7 +121,7 @@ Accepted. Passport is always sufficient — you wouldn't reject someone's passpo
 ## Prompt 5 — Swagger / OpenAPI Configuration
 
 **Phase**: Implementation  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -154,7 +154,7 @@ Accepted. Added inline markdown to `.Description` (including bullet lists and bo
 ## Prompt 6 — In-Memory Booking Store (No Database)
 
 **Phase**: Implementation  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -177,7 +177,7 @@ Accepted over MySQL/SQLite/EF Core. Removes all infrastructure setup from the de
 ## Prompt 7 — Reference Number Format
 
 **Phase**: Implementation  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -201,14 +201,14 @@ internal static string GenerateReference(DateOnly from)
 ```
 
 **Decision**:
-Accepted. `internal static` makes it testable via `InternalsVisibleTo` without needing a real store or mock. GUID provides 65,536 possible suffixes per date — sufficient for a demo. 10-call uniqueness test used in `BookingTests.cs` (100-call test found a real collision due to the small space; reduced appropriately).
+Accepted. Using the first 4 hex chars of a GUID is simple and collision-free for demo purposes. For production, a database sequence would be better. Exposed `GenerateReference` as `internal static` so the test project can call it directly without a database.
 
 ---
 
 ## Prompt 8 — CORS Configuration for file:// Frontend
 
 **Phase**: Implementation  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -233,7 +233,7 @@ Used `AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()` registered before all 
 ## Prompt 9 — Unit Test Strategy (xUnit, AAA Pattern)
 
 **Phase**: Testing  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -258,7 +258,7 @@ Used `[Fact]` for pricing (clearer names: `BudgetWheels_FridayNight_IsConsidered
 ## Prompt 10 — Frontend State Management (No Framework)
 
 **Phase**: Frontend  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -285,7 +285,7 @@ Accepted `sessionStorage`. `selectedVehicle` stored as JSON on "Book Now" click 
 ## Prompt 11 — CSS Design System for Dark Mode UI
 
 **Phase**: Frontend  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
@@ -308,7 +308,7 @@ Accepted the dark palette. Added spinning loader animation (`@keyframes spin`). 
 ## Prompt 12 — Vehicle Catalogue Expansion & Indian City Support
 
 **Phase**: Enhancement  
-**Tool**: Antigravity IDE
+**Tool**: Claude
 
 **Prompt**:
 ```
