@@ -1,6 +1,6 @@
 # 🚗 SkyRoute Car Rental Availability
 
-> Full-stack car rental search & booking platform — .NET 8 Minimal API · Plain HTML/JS · xUnit · MySQL
+> Full-stack car rental search & booking platform — .NET 8 Minimal API · Plain HTML/JS · xUnit · Swagger/OpenAPI UI. Runs fully locally/offline with no external infrastructure dependencies.
 
 ---
 
@@ -8,21 +8,17 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/car-rental.git
-cd car-rental
+git clone https://github.com/AbhijitPatilAJ/Car-rental.git
+cd Car-rental
 
-# 2. Configure — edit .env with your MySQL password
-copy .env.example .env
-notepad .env
-
-# 3. Create database
-mysql -u root -p < database\schema.sql
-
-# 4. Start backend
+# 2. Start Backend API
 cd CarRental.Api
 dotnet run
 
-# 5. Open frontend in browser
+# 3. Open Swagger UI
+# Go to: http://localhost:5000/swagger
+
+# 4. Open Frontend in browser
 # Double-click: skyroute-ui\index.html
 ```
 
@@ -33,28 +29,8 @@ dotnet run
 | Tool | Version | Download |
 |------|---------|----------|
 | .NET SDK | 8.0+ | https://dotnet.microsoft.com/download/dotnet/8.0 |
-| MySQL Server | 8.0+ | https://dev.mysql.com/downloads/installer/ |
 | Git | Any | https://git-scm.com/download/win |
 | Browser | Chrome/Edge/Firefox | (built-in) |
-
-> For a complete, step-by-step guide for first-time setup (including how to install each tool), see **[PREREQUISITES.md](./PREREQUISITES.md)**.
-
----
-
-## Configuration
-
-All configuration is in `.env` (copy from `.env.example`):
-
-```dotenv
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=CarRentalDb
-DB_USER=root
-DB_PASSWORD=YOUR_MYSQL_PASSWORD_HERE
-API_PORT=5000
-```
-
-**That is the only file you need to edit.**
 
 ---
 
@@ -69,7 +45,8 @@ dotnet run
 
 Expected output:
 ```
-Now listening on: http://localhost:5000
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5000
 ```
 
 ### Browser — Frontend
@@ -79,9 +56,18 @@ Open `skyroute-ui/index.html` by double-clicking it in File Explorer.
 ### Running Tests
 
 ```bash
-cd CarRental.Tests
-dotnet test --verbosity normal
+# Run all tests
+dotnet test
+
+# Run tests with detailed console logs
+dotnet test CarRental.Tests/ --logger "console;verbosity=detailed"
 ```
+
+---
+
+## Swagger UI Documentation
+
+Access the interactive API documentation at: **[http://localhost:5000/swagger](http://localhost:5000/swagger)**
 
 ---
 
@@ -89,27 +75,28 @@ dotnet test --verbosity normal
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Health check |
-| GET | `/cars/search?pickup=&from=&to=&category=` | Search vehicles |
-| POST | `/cars/book` | Confirm a booking |
-| GET | `/cars/booking/{reference}` | Get booking details |
+| GET | `/` | Health check & API details |
+| GET | `/cars/search?pickup=&from=&to=&category=` | Search available vehicles across both stubs |
+| POST | `/cars/book` | Confirm booking with document validation |
+| GET | `/cars/booking/{reference}` | Retrieve booking details by reference |
 
 ### Error Codes
 
 | Code | When |
 |------|------|
-| 400 | Missing required param or invalid dates |
+| 400 | Missing required params or invalid dates |
 | 404 | Booking reference not found |
 | 422 | Document type mismatch (NationalId at international pickup) |
 
 ---
 
-## Pickup Locations
+## Pickup Locations & Validation Rules
 
 | City | Type | Documents Accepted |
 |------|------|-------------------|
-| London | 🇬🇧 Domestic | Passport, National ID |
-| Manchester | 🇬🇧 Domestic | Passport, National ID |
+| Bangalore | 🇮🇳 Domestic | Passport, National ID |
+| Mumbai | 🇮🇳 Domestic | Passport, National ID |
+| Delhi | 🇮🇳 Domestic | Passport, National ID |
 | Paris | ✈️ International | Passport only |
 | Dubai | ✈️ International | Passport only |
 | New York | ✈️ International | Passport only |
@@ -122,37 +109,34 @@ dotnet test --verbosity normal
 
 ```
 car-rental/
-├── .env                    ← Your config (NOT in git)
-├── .env.example            ← Template
 ├── README.md
-├── spec.md                 ← Data models & contracts
-├── PREREQUISITES.md        ← A-Z setup guide
+├── spec.md                 ← Data models & API contracts
+├── PREREQUISITES.md        ← Offline setup guide
 ├── EXECUTION_PLAN.md       ← Implementation plan
-├── prompts.md              ← AI prompts used
-├── reflection.md           ← What to improve
-├── database/
-│   └── schema.sql          ← Run once to create DB
+├── prompts.md              ← AI prompts used & decisions
+├── reflection.md           ← Improvement ideas & reflection
 ├── CarRental.Api/
-│   ├── Program.cs          ← Routes + DI
-│   ├── Interfaces/ICarRentalProvider.cs
-│   ├── Models/             ← All domain models
-│   ├── Providers/          ← PremiumDrive, BudgetWheels
-│   ├── Services/           ← CarRentalService, DocumentValidation
-│   └── Data/               ← BookingRepository (MySQL)
+│   ├── Program.cs          ← API routes, Swagger configuration, CORS
+│   ├── Interfaces/
+│   │   └── ICarRentalProvider.cs
+│   ├── Models/             ← Domain models
+│   ├── Providers/          ← PremiumDrive (Flat rate) & BudgetWheels (Surcharge)
+│   ├── Services/           ← CarRentalService & DocumentValidationService
+│   └── Data/               ← BookingRepository (In-Memory ConcurrentDictionary)
 ├── CarRental.Tests/
-│   ├── PricingTests.cs     ← 11 tests
-│   ├── ValidationTests.cs  ← 13 tests
-│   ├── SearchTests.cs      ← 14 tests
-│   └── BookingTests.cs     ← 7 tests
+│   ├── PricingTests.cs     ← Weekend surcharge logic tests
+│   ├── ValidationTests.cs  ← Pickup location & document validation tests
+│   ├── SearchTests.cs      ← Multi-provider merging & filtering tests
+│   └── BookingTests.cs     ← Unique reference & storage tests
 └── skyroute-ui/
-    ├── index.html          ← Search page
-    ├── booking.html        ← Booking form
-    ├── confirmation.html   ← Booking confirmation
-    ├── css/styles.css
+    ├── index.html          ← Search dashboard
+    ├── booking.html        ← Booking checkout page (with currency toggle)
+    ├── confirmation.html   ← Booking receipt page
+    ├── css/styles.css      ← Modern dark mode styles with surcharge breakdown box
     └── js/
-        ├── api.js          ← Shared API client
-        ├── search.js
-        └── booking.js
+        ├── api.js          ← API client and currency formatters
+        ├── search.js       ← Form logic & search card rendering
+        └── booking.js      ← Checkout form & sidebar surcharge breakdown
 ```
 
 ---
@@ -161,24 +145,23 @@ car-rental/
 
 | Decision | Rationale |
 |----------|-----------|
-| `ICarRentalProvider` interface | Add a 3rd provider with zero changes to existing code |
-| BudgetWheels day-by-day surcharge | Per spec: "iterate each night, not multiply" |
-| `Task.WhenAll` for providers | Both providers called in parallel |
-| MySqlConnector (raw ADO.NET) | Simple; no migrations; one schema.sql file |
-| `.env` for connection string | One file to configure; git-ignored |
-| Client + server document validation | Defense in depth per spec |
-| `sessionStorage` for page state | Cleared on tab close; handles JSON objects |
+| `ICarRentalProvider` interface | Add a 3rd provider with zero changes to existing aggregator logic |
+| BudgetWheels day-by-day surcharge | Per spec: "iterate each night, not multiply". Friday, Saturday, Sunday nights cost 20% more. |
+| In-Memory Booking Storage | Runs fully offline with no SQL Server setup needed. State persists for the process lifetime. |
+| Swagger/OpenAPI | Generates live documentation and testing capabilities directly on port 5000. |
+| Dual Currency Handling | Stored in INR; displays dual price (₹ INR and $ USD) for international pickups, allowing the traveller to select their booking currency. |
+| Client + server document validation | Defense in depth per spec. Client-side JS provides fast UX; server-side C# enforces validation rules. |
+| `sessionStorage` for page state | State is isolated to the tab session and automatically cleared when tab closes. |
 
 ---
 
 ## Troubleshooting
 
-**MySQL connection failed**: Check DB_PASSWORD in `.env`; ensure MySQL service is running (Windows Services → MySQL80)
+**Port 5000 in use**: Ensure another instance of `CarRental.Api` is not running. Kill it using:
+```powershell
+Get-Process -Name "CarRental.Api" -ErrorAction SilentlyContinue | Stop-Process -Force
+```
 
-**Port 5000 in use**: Change `API_PORT` in `.env`; update `const API_BASE` in `skyroute-ui/js/api.js`
+**Frontend "Failed to fetch"**: Ensure `dotnet run` is running in your terminal.
 
-**dotnet command not found**: Install .NET 8 SDK; restart terminal
-
-**Frontend "Failed to fetch"**: Ensure `dotnet run` is running in a separate terminal
-
-**Database missing**: Run `mysql -u root -p < database\schema.sql`
+**Swagger is not loading**: Make sure the backend is active at `http://localhost:5000`.
