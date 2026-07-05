@@ -31,8 +31,23 @@ function populateSummary() {
   updateCurrencyDisplay();
 }
 
+// Helper to count weekend and weekday nights
+function countBookingNightTypes(fromStr, toStr) {
+  let weekendNights = 0, weekdayNights = 0;
+  let cur = new Date(fromStr + 'T00:00:00');
+  const end = new Date(toStr + 'T00:00:00');
+  while (cur < end) {
+    const day = cur.getDay(); // 0=Sun, 5=Fri, 6=Sat
+    if (day === 0 || day === 5 || day === 6) weekendNights++;
+    else weekdayNights++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return { weekendNights, weekdayNights };
+}
+
 // ── Update price display when currency changes ────────────────────────────────
 function updateCurrencyDisplay() {
+  const isPremium = vehicle.provider === 'PremiumDrive';
   const inrDaily = vehicle.dailyRate;
   const inrTotal = vehicle.totalPrice;
 
@@ -53,7 +68,52 @@ function updateCurrencyDisplay() {
       document.getElementById('sum-currency-row').style.display = 'none';
     }
   }
+
+  // Render surcharge details box in sidebar dynamically
+  const box = document.getElementById('sum-surcharge-box');
+  if (box && from && to) {
+    const formatFn = selectedCurrency === 'USD' ? (val) => formatUSD(inrToUsd(val)) : formatINR;
+    if (!isPremium) {
+      const { weekendNights, weekdayNights } = countBookingNightTypes(from, to);
+      const avgRate = Math.round(inrTotal / (weekendNights + weekdayNights));
+      if (weekendNights > 0) {
+        box.innerHTML = `
+          <div class="surcharge-box" style="margin: 10px 0;">
+            ${weekdayNights > 0 ? `
+            <div class="surcharge-row">
+              <span>🌙 ${weekdayNights} weeknight${weekdayNights !== 1 ? 's' : ''}</span>
+              <span>${formatFn(inrDaily)}/night</span>
+            </div>` : ''}
+            <div class="surcharge-row weekend-row">
+              <span>🎉 ${weekendNights} weekend night${weekendNights !== 1 ? 's' : ''} (+20%)</span>
+              <span>${formatFn(Math.round(inrDaily * 1.2))}/night</span>
+            </div>
+            <div class="surcharge-row effective-row">
+              <span>📊 Avg per night</span>
+              <span>${formatFn(avgRate)}</span>
+            </div>
+          </div>`;
+      } else {
+        box.innerHTML = `
+          <div class="surcharge-box no-surcharge" style="margin: 10px 0;">
+            <div class="surcharge-row">
+              <span>🌙 ${weekdayNights} weeknight${weekdayNights !== 1 ? 's' : ''} (no surcharge)</span>
+              <span>${formatFn(inrDaily)}/night</span>
+            </div>
+          </div>`;
+      }
+    } else {
+      box.innerHTML = `
+        <div class="surcharge-box flat-rate" style="margin: 10px 0;">
+          <div class="surcharge-row">
+            <span>📋 Flat rate — same every night</span>
+            <span>${formatFn(inrDaily)}/night</span>
+          </div>
+        </div>`;
+    }
+  }
 }
+
 
 // ── Currency toggle — show only for international pickups ─────────────────────
 function initCurrencyToggle() {

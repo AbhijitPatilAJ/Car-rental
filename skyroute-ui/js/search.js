@@ -7,7 +7,7 @@ const sortBtn = document.getElementById('btn-sort');
 const countEl = document.getElementById('results-count-text');
 
 let currentResults = [];
-let currentPickup  = '';    // track pickup for currency display
+let currentPickup  = '';
 let sortAsc        = true;
 
 // Set min date to today
@@ -101,8 +101,8 @@ function showError(msg) {
 
 function renderCards(data) {
   const pickupType = classifyCity(currentPickup);
-  stateEl.innerHTML  = '';
-  results.innerHTML  = `<div class="results-grid">${data.map(v => buildCard(v, pickupType)).join('')}</div>`;
+  stateEl.innerHTML = '';
+  results.innerHTML = `<div class="results-grid">${data.map(v => buildCard(v, pickupType)).join('')}</div>`;
 
   document.querySelectorAll('.btn-book').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -118,33 +118,97 @@ function renderCards(data) {
   });
 }
 
+// ── Weekend night counter (mirrors backend BudgetWheels logic) ────────────────
+function countNightTypes(fromStr, toStr) {
+  let weekendNights = 0, weekdayNights = 0;
+  let cur = new Date(fromStr + 'T00:00:00');
+  const end = new Date(toStr + 'T00:00:00');
+  while (cur < end) {
+    const day = cur.getDay(); // 0=Sun, 5=Fri, 6=Sat
+    if (day === 0 || day === 5 || day === 6) weekendNights++;
+    else weekdayNights++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return { weekendNights, weekdayNights };
+}
+
 function buildCard(v, pickupType) {
   const isPremium  = v.provider === 'PremiumDrive';
   const badgeCls   = isPremium ? 'badge-premium' : 'badge-budget';
   const badgeIcon  = isPremium ? '⭐' : '💰';
+
   const cancelChip = isPremium
     ? `<span class="detail-chip chip-success">✓ Free cancel 48h</span>`
     : `<span class="detail-chip chip-danger">✗ Non-refundable</span>`;
-  const insurChip  = isPremium
+  const insurChip = isPremium
     ? `<span class="detail-chip chip-success">🛡 Comprehensive</span>`
     : `<span class="detail-chip chip-warning">🛡 Basic</span>`;
 
   const displayName = v.vehicleName || v.category;
 
-  // ── Pricing display ─────────────────────────────────────────────────────
-  // Domestic  → ₹ only
-  // International → ₹ primary + $ secondary
+  // ── Currency display ──────────────────────────────────────────────────────
   const totalDisplay = pickupType === 'international'
     ? `${formatINR(v.totalPrice)} <span class="usd-price">≈ ${formatUSD(inrToUsd(v.totalPrice))}</span>`
     : formatINR(v.totalPrice);
 
   const dailyDisplay = pickupType === 'international'
-    ? `${formatINR(v.dailyRate)} <span class="usd-price">≈ ${formatUSD(inrToUsd(v.dailyRate))}/night</span>`
+    ? `${formatINR(v.dailyRate)} <span class="usd-price">≈ ${formatUSD(inrToUsd(v.dailyRate))}</span>`
     : formatINR(v.dailyRate);
 
   const currencyTag = pickupType === 'international'
     ? `<span class="currency-tag intl-tag">₹ INR · $ USD</span>`
     : `<span class="currency-tag domestic-tag">₹ INR</span>`;
+
+  // ── Pricing breakdown panel ───────────────────────────────────────────────
+  let surchargeInfo = '';
+  const fromVal = document.getElementById('from-date').value;
+  const toVal   = document.getElementById('to-date').value;
+
+  if (!isPremium && fromVal && toVal) {
+    // BudgetWheels — show night-by-night surcharge breakdown
+    const { weekendNights, weekdayNights } = countNightTypes(fromVal, toVal);
+    const effectiveRate = v.rentalDays > 0
+      ? formatINR(Math.round(v.totalPrice / v.rentalDays))
+      : formatINR(v.dailyRate);
+
+    if (weekendNights > 0) {
+      // Mixed or all-weekend → show surcharge rows
+      surchargeInfo = `
+        <div class="surcharge-box">
+          ${weekdayNights > 0 ? `
+          <div class="surcharge-row">
+            <span>🌙 ${weekdayNights} weeknight${weekdayNights !== 1 ? 's' : ''}</span>
+            <span>${formatINR(v.dailyRate)}/night</span>
+          </div>` : ''}
+          <div class="surcharge-row weekend-row">
+            <span>🎉 ${weekendNights} weekend night${weekendNights !== 1 ? 's' : ''} <em>(+20% surcharge)</em></span>
+            <span>${formatINR(Math.round(v.dailyRate * 1.2))}/night</span>
+          </div>
+          <div class="surcharge-row effective-row">
+            <span>📊 Avg per night</span>
+            <span>${effectiveRate}</span>
+          </div>
+        </div>`;
+    } else {
+      // All weekdays — no surcharge
+      surchargeInfo = `
+        <div class="surcharge-box no-surcharge">
+          <div class="surcharge-row">
+            <span>🌙 ${weekdayNights} weeknight${weekdayNights !== 1 ? 's' : ''} — no weekend surcharge</span>
+            <span>${formatINR(v.dailyRate)}/night</span>
+          </div>
+        </div>`;
+    }
+  } else if (isPremium && fromVal && toVal) {
+    // PremiumDrive — flat rate, no surcharge ever
+    surchargeInfo = `
+      <div class="surcharge-box flat-rate">
+        <div class="surcharge-row">
+          <span>📋 Flat rate — same price every night</span>
+          <span>${formatINR(v.dailyRate)}/night</span>
+        </div>
+      </div>`;
+  }
 
   return `
     <div class="vehicle-card">
@@ -165,9 +229,10 @@ function buildCard(v, pickupType) {
           <div class="rental-nights">${v.rentalDays} night${v.rentalDays !== 1 ? 's' : ''}</div>
         </div>
         <div class="price-daily">
-          <strong>${dailyDisplay}</strong><br>per night
+          <strong>${dailyDisplay}</strong><br>base/night
         </div>
       </div>
+      ${surchargeInfo}
       <div class="details-row">
         ${cancelChip}
         ${insurChip}

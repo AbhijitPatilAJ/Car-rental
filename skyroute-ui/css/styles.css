@@ -663,3 +663,60 @@ body {
   text-align: right;
 }
 
+/* ── Weekend Surcharge Breakdown Box ─────────────────────── */
+.surcharge-box {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.surcharge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  color: var(--text-secondary);
+}
+.surcharge-row em {
+  font-style: normal;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Weekend row — amber highlight */
+.weekend-row {
+  color: #f7b731;
+  font-weight: 600;
+}
+
+/* Avg/effective rate summary row */
+.effective-row {
+  color: var(--text-primary);
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 6px;
+}
+
+/* All weekdays — green tint */
+.surcharge-box.no-surcharge {
+  border-color: rgba(46, 204, 113, 0.3);
+  background: rgba(46, 204, 113, 0.05);
+}
+.surcharge-box.no-surcharge .surcharge-row {
+  color: #2ecc71;
+}
+
+/* PremiumDrive flat rate — neutral/muted */
+.surcharge-box.flat-rate {
+  border-color: rgba(108, 99, 255, 0.25);
+  background: rgba(108, 99, 255, 0.05);
+}
+.surcharge-box.flat-rate .surcharge-row {
+  color: #a78bfa;
+}
+
+
